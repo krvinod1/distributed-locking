@@ -40,16 +40,16 @@ public class LockRepositoryImpl extends AbstractDynamoRepository<Lock> implement
         return Lock.class;
     }
 
-    private void createLockIfNeeded(String name) {
+    private  void createLockIfNeeded(String name) {
         Lock lock = new Lock(name);
         try {
             lock = findOne(lock);
-            if (lock == null) {
-                lock = new Lock(name);
-                save(lock);
-            }
+                if (lock == null) {
+                    lock = new Lock(name);
+                    save(lock);
+                }
         } catch (Exception ex) {
-            LOGGER.info("createLockIfNeeded(); probably lock already exist ={} ", name, ex);
+            LOGGER.info("createLockIfNeeded(); probably lock already exist ={} ", name);
         }
     }
 

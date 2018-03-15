@@ -10,7 +10,6 @@
         </layout>
     </appender>
     <logger name="com.intuit.sbg.appconnect">
-        <appender-ref ref="console"/>
     </logger>
 
 </log4j:configuration>
