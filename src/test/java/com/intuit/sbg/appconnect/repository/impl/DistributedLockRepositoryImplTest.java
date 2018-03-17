@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 /**
  * Created by vkumar21 on 7/7/17.
  */
-public class LockRepositoryImplTest extends DynamoDBBaseTest {
+public class DistributedLockRepositoryImplTest extends DynamoDBBaseTest {
 
     LockRepository repository = null;
 

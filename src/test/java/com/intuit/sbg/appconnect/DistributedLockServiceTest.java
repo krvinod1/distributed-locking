@@ -6,11 +6,11 @@ import org.testng.annotations.Test;
 /**
  * Created by vkumar21 on 3/15/18.
  */
-public class LockServiceTest {
+public class DistributedLockServiceTest {
 
     @Test
     public void multipleReadLock() {
-        LockService readLock = new LockService("multipleReadLock");
+        DistributedLock readLock = new DistributedLock("multipleReadLock");
         Assert.assertTrue(readLock.lockForRead());
         Assert.assertTrue(readLock.lockForRead());
         Assert.assertTrue(readLock.lockForRead());
@@ -19,14 +19,14 @@ public class LockServiceTest {
 
     @Test
     public void readAndWriteLock() {
-        LockService readLock = new LockService("readAndWriteLock");
+        DistributedLock readLock = new DistributedLock("readAndWriteLock");
         Assert.assertTrue(readLock.lockForRead());
         Assert.assertFalse(readLock.lockForWrite(0));
     }
 
     @Test
     public void readAndWriteUnlockLock() {
-        LockService readLock = new LockService("readAndWriteUnlockLock");
+        DistributedLock readLock = new DistributedLock("readAndWriteUnlockLock");
         Assert.assertTrue(readLock.lockForRead());
         Assert.assertFalse(readLock.lockForWrite(0));
         Assert.assertTrue(readLock.release());
@@ -35,7 +35,7 @@ public class LockServiceTest {
 
     @Test
     public void multipleWriteLock() {
-        LockService readLock = new LockService("multipleWriteLock");
+        DistributedLock readLock = new DistributedLock("multipleWriteLock");
         Assert.assertTrue(readLock.lockForWrite(0));
         Assert.assertFalse(readLock.lockForWrite(0));
     }

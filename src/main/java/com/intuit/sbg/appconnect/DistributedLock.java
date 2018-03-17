@@ -1,19 +1,19 @@
 package com.intuit.sbg.appconnect;
 
-import com.intuit.sbg.appconnect.domain.Lock;
 import com.intuit.sbg.appconnect.repository.dynamodb.LockRepository;
 import com.intuit.sbg.appconnect.repository.dynamodb.impl.LockRepositoryImpl;
 import com.intuit.sbg.appconnect.util.AppConnectDynamoDBManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.util.Date;
 
 /**
  * Created by vkumar21 on 3/15/18.
  */
-public class LockService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LockService.class);
+public class DistributedLock {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedLock.class);
 
     private final String resourceName;
     private LockState active_lock;
@@ -26,7 +26,7 @@ public class LockService {
      *
      * @param name Logical name of LockState to create.
      */
-    public LockService(String name) {
+    public DistributedLock(String name) {
         resourceName = name;
         active_lock = LockState.NO_LOCK;
         lockRepository = new LockRepositoryImpl(new AppConnectDynamoDBManager("http://localhost:8000"));
@@ -73,7 +73,7 @@ public class LockService {
         int elapsedWait = 0;
         boolean acquiredLock = false;
         boolean reserved = false;
-        String lockOwner= "bar";
+        String hostname = "unknown";
         int pollInterval = (timeout < 100) ? timeout : 100;
         /*
            First try to get a write lock ( with writer_name as null and no reader). If unable to get a lock, try to reserve the lock
@@ -82,10 +82,11 @@ public class LockService {
          */
 
         try {
-            acquiredLock = lockRepository.acquireWriteLock(resourceName, lockOwner);
+            hostname = InetAddress.getLocalHost().getHostAddress();
+            acquiredLock = lockRepository.acquireWriteLock(resourceName, hostname);
             while (!acquiredLock && elapsedWait < timeout) {
                 if (!reserved) {
-                    reserved = lockRepository.reserveWriteLock(resourceName, lockOwner);
+                    reserved = lockRepository.reserveWriteLock(resourceName, hostname);
                 }
                 try {
                     Thread.sleep(pollInterval);
@@ -93,23 +94,23 @@ public class LockService {
                 }
                 elapsedWait = elapsedWait + pollInterval;
                 if (reserved) {
-                    Lock lock = lockRepository.findOne(new Lock(resourceName));
+                    com.intuit.sbg.appconnect.domain.Lock lock = lockRepository.findOne(new com.intuit.sbg.appconnect.domain.Lock(resourceName));
                     acquiredLock = lock.getReaders() < 1;
                 }
             }
         } catch (Exception e) {
-            LOGGER.warn("lockForWrite(); lock for write acquire failed, resource name ={}; writer ={};", resourceName, lockOwner, e);
+            LOGGER.warn("lockForWrite(); lock for write acquire failed, resource name ={}; writer ={};", resourceName, hostname, e);
         }
 
         if (acquiredLock) {
             active_lock = LockState.WRITE_LOCK;
         } else if (reserved) {
             try {
-                Lock lock = lockRepository.findOne(new Lock(resourceName));
+                com.intuit.sbg.appconnect.domain.Lock lock = lockRepository.findOne(new com.intuit.sbg.appconnect.domain.Lock(resourceName));
                 lock.setWriterName(null);
                 lockRepository.save(lock);
             } catch (Exception e) {
-                LOGGER.warn("lockForWrite(); reset reserve lock failed, resource name ={}; writer ={};", resourceName, lockOwner, e);
+                LOGGER.warn("lockForWrite(); reset reserve lock failed, resource name ={}; writer ={};", resourceName, hostname, e);
             }
         }
         return acquiredLock;
@@ -150,7 +151,7 @@ public class LockService {
                         break;
                     case WRITE_LOCK:
                         if (deleteLock) {
-                            Lock lock = lockRepository.findOne(new Lock(resourceName));
+                            com.intuit.sbg.appconnect.domain.Lock lock = lockRepository.findOne(new com.intuit.sbg.appconnect.domain.Lock(resourceName));
                             lockRepository.delete(lock);
                             lockReleased = true;
                         } else {

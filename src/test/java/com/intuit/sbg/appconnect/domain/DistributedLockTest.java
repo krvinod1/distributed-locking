@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 /**
  * Created by vkumar21 on 7/6/17.
  */
-public class LockTest {
+public class DistributedLockTest {
 
     @Test
     public void constructionTest() {
